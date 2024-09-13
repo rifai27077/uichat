@@ -4,29 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firestore Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-8Db1NlPlpUoPhwAmU7eBNExRbrZXpDbfGZ1ZZbZUd9nuzhgwdITxBJO2pmMthI4m" crossorigin="anonymous">
     <style>
         body {
             font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
             padding: 20px;
-        }
-
-        form {
-            margin-bottom: 20px;
-        }
-
-        input[type="submit"] {
-            margin-left: 10px;
         }
 
         #messages {
             list-style-type: none;
             padding: 10px;
             margin: 0;
-            max-height: 400px; /* Adjust as needed */
+            max-height: 70vh;
             overflow-y: auto;
             border: 1px solid #ccc;
             background: #f9f9f9;
-            margin-top: 20px;
+            margin-top: 10px;
             border-radius: 5px;
         }
 
@@ -37,6 +42,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        #messages li:last-child {
+            border-bottom: none;
         }
 
         #messages li button {
@@ -51,13 +60,37 @@
         #messages li button:hover {
             background: #ff3a3a;
         }
+
+        form {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
     </style>
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAVnc78CVeW18QI_8PGMoUxc8rQKuclaSM",
             authDomain: "socialmediaapp-33856.firebaseapp.com",
@@ -68,12 +101,11 @@
             measurementId: "G-WSQL8E6VYG"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const myName = prompt('Enter your name');
 
-        // Function to delete a message
+        // Function to delete a message with confirmation
         window.deleteMessage = async (messageId) => {
             if (confirm('Are you sure you want to delete this message?')) {
                 try {
@@ -94,40 +126,46 @@
                 try {
                     await addDoc(collection(db, "messages"), {
                         sender: myName,
-                        message: message
+                        message: message,
+                        timestamp: serverTimestamp() // Add server timestamp
                     });
                     console.log('Message sent successfully');
-                    alert("Message sent successfully!");
                     document.getElementById('message').value = ""; // Clear the input field
                 } catch (error) {
                     console.error("Error adding document: ", error);
                 }
             });
 
-            // Listen for incoming messages
+            // Listen for incoming messages, ordered by timestamp
             const messagesRef = collection(db, "messages");
-            onSnapshot(messagesRef, (snapshot) => {
+            const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+            onSnapshot(messagesQuery, (snapshot) => {
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    html += `<li>${data.sender}: ${data.message} <button onclick="deleteMessage('${doc.id}')">Delete</button></li>`;
+                    const timestamp = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleTimeString() : "Unknown time";
+                    html += `<li>${data.sender}: ${data.message} <span class="text-muted" style="font-size: 0.8em;">${timestamp}</span> <button onclick="deleteMessage('${doc.id}')">Delete</button></li>`;
                 });
                 const messagesList = document.getElementById('messages');
                 messagesList.innerHTML = html;
-                // Scroll to the bottom of the messages list
+                // Scroll to the bottom to ensure the latest message is visible
                 messagesList.scrollTop = messagesList.scrollHeight;
             });
         });
     </script>
 </head>
 <body>
-    <!-- create a form to send messages -->
-    <form>
-        <input id="message" placeholder="Enter message" autocomplete="off">
-        <input type="submit" value="Send">
-    </form>
+    <div id="chat-container" class="container">
+        <!-- Message list -->
+        <ul id="messages" class="list-group"></ul>
 
-    <!-- create a list -->
-    <ul id="messages"></ul>
+        <!-- Message input form -->
+        <form class="d-flex">
+            <input id="message" type="text" class="form-control" placeholder="Enter message" autocomplete="off">
+            <input type="submit" value="Send" class="btn btn-primary">
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-Qm6K0qw7L39gfMMdfXL3UafQaYid/cDq6zIgje/N6AhKwnwSAJTyI/c1qVa4YHSk" crossorigin="anonymous"></script>
 </body>
 </html>
