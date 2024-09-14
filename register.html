@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolApp - Register</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <form>
+            <input type="email" placeholder="Email" required>
+            <input type="password" placeholder="Password" required>
+            <input type="password" placeholder="Confirm Password" required>
+            <button type="submit">Register</button>
+        </form>
+        <div class="social-login">
+            <button id="google-register" class="google-btn">
+                <svg fill="#1C2033" width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M61.5016 29.2001H32.8016V37.7001H53.4016C52.3016 49.5001 42.7016 54.6001 33.4016 54.6001C21.6016 54.6001 11.1016 45.4001 11.1016 32.1001C11.1016 19.3001 21.1016 9.60011 33.4016 9.60011C42.8016 9.60011 48.5016 15.7001 48.5016 15.7001L54.3016 9.60011C54.3016 9.60011 46.5016 1.10011 33.0016 1.10011C15.2016 1.00011 1.60156 15.9001 1.60156 32.0001C1.60156 47.6001 14.4016 63.0001 33.3016 63.0001C50.0016 63.0001 62.0016 51.7001 62.0016 34.8001C62.1016 31.3001 61.5016 29.2001 61.5016 29.2001Z"/></svg>
+                <span>Register with Google</span>
+            </button>
+        </div>
+        <div class="link">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVnc78CVeW18QI_8PGMoUxc8rQKuclaSM",
+            authDomain: "socialmediaapp-33856.firebaseapp.com",
+            projectId: "socialmediaapp-33856",
+            storageBucket: "socialmediaapp-33856.appspot.com",
+            messagingSenderId: "832803806835",
+            appId: "1:832803806835:web:4f4c4d1739e0cee6281406",
+            measurementId: "G-WSQL8E6VYG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const email = document.querySelector('input[type="email"]').value;
+            const password = document.querySelector('input[type="password"]').value;
+            const confirmPassword = document.querySelectorAll('input[type="password"]')[1].value;
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match.");
+                return;
+            }
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then(userCredential => {
+                    // Send email verification
+                    const user = userCredential.user;
+                    sendEmailVerification(user)
+                        .then(() => {
+                            alert("Registration successful! Please check your email to verify your account.");
+                            window.location.href = "login.html";
+                        })
+                        .catch(error => {
+                            console.error("Error sending email verification: ", error.message);
+                            alert("Registration successful but failed to send verification email. Please check your email later.");
+                        });
+                })
+                .catch(error => {
+                    console.error("Error registering: ", error.message);
+                    alert("Registration failed, please try again.");
+                });
+        });
+
+        document.getElementById('google-register').addEventListener('click', function() {
+            signInWithPopup(auth, googleProvider)
+                .then(result => {
+                    window.location.href = "chat.html";
+                })
+                .catch(error => {
+                    console.error("Error signing in with Google: ", error.message);
+                    alert("Google registration failed, please try again.");
+                });
+        });
+    </script>
+</body>
+</html>
